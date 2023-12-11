@@ -30,11 +30,23 @@
         android:layout_marginHorizontal="10dp"
         android:background="@drawable/searchview_round20"
         android:focusable="true"
+        android:layout_marginTop="20dp"
         app:iconifiedByDefault="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:queryHint="Search Location"
-        app:searchIcon="@drawable/common_google_signin_btn_icon_dark" />
+        app:searchIcon="@drawable/baseline_search_black" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" >
+
+
+    </RelativeLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

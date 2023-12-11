@@ -6,6 +6,7 @@ import androidx.appcompat.widget.SearchView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.splashscreen.SplashScreen;
+import androidx.cursoradapter.widget.SimpleCursorAdapter;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -13,7 +14,9 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -34,13 +37,14 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.OnTokenCanceledListener;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
 
     private GoogleMap mMap;
     private FusedLocationProviderClient fusedLocationProviderClient;
@@ -50,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     Marker marker;
     SearchView searchView;
     FloatingActionButton floatingActionButtonMyLocation;
+    BottomSheetDialog bottomSheetDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +101,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
+
+
         searchView = findViewById(R.id.searchView);
         searchView.clearFocus();
         // input
@@ -104,24 +111,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public boolean onQueryTextSubmit(String query) {
                 String strLocation = searchView.getQuery().toString();
 
-                if (strLocation != null) {
-                    Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
-                    try {
-                        List<Address> addressList = geocoder.getFromLocationName(strLocation, 1);
-                        if (addressList.size() > 0) {
-                            LatLng latLng = new LatLng(addressList.get(0).getLatitude(), addressList.get(0).getLongitude());
-                            if (marker != null) {
-                                marker.remove();
-                            }
-                            MarkerOptions markerOptions = new MarkerOptions().position(latLng).title(strLocation);
-                            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
-                            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
-                            mMap.animateCamera(cameraUpdate);
-                            marker = mMap.addMarker(markerOptions);
+                Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
+                try {
+                    List<Address> addressList = geocoder.getFromLocationName(strLocation, 1);
+                    if (addressList.size() > 0) {
+                        LatLng latLng = new LatLng(addressList.get(0).getLatitude(), addressList.get(0).getLongitude());
+                        if (marker != null) {
+                            marker.remove();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        MarkerOptions markerOptions = new MarkerOptions().position(latLng).title(strLocation);
+                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+                        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
+                        mMap.animateCamera(cameraUpdate);
+                        marker = mMap.addMarker(markerOptions);
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
                 return false;
             }
@@ -133,12 +138,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
 
-
     }
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         mMap = googleMap;
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(new LatLng(43.07630232892188, -89.40010886244517));
+        markerOptions.title("Memorial Union");
+        mMap.addMarker(markerOptions);
+
+        mMap.setOnMarkerClickListener(this);
     }
 
 
@@ -201,5 +211,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15)); // Adjust the zoom level as needed
             }
         });
+    }
+
+    @Override
+    public boolean onMarkerClick(@NonNull Marker marker) {
+        LatLng latLng = marker.getPosition();
+        String title = marker.getTitle();
+        String address = "800 Langdon St, Madison, WI 53703 USA";
+        Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+            if (addresses != null && addresses.size() > 0) {
+                Address tempAddress = addresses.get(0);
+                address = tempAddress.getAddressLine(0);
+            }
+        } catch (IOException e) {
+            Log.e("ReverseGeocoding", "Error retrieving address from location", e);
+        }
+
+        MapInfoBottomSheetDialog bottomSheetDialog = MapInfoBottomSheetDialog.newInstance(title, address);
+        bottomSheetDialog.show(getSupportFragmentManager(), bottomSheetDialog.getTag());
+
+        return false;
     }
 }
